@@ -111,7 +111,7 @@ pub fn generate(directory: &Path, output: &Path) -> Result<(), String> {
         }
     }
     code.push_str("_ => None,\n}}\n");
-    writeln!(code, "const MESSAGES: [[&str; {}]; {}] = [", keys.len(), catalogs.len()).unwrap();
+    writeln!(code, "static MESSAGES: [[&str; {}]; {}] = [", keys.len(), catalogs.len()).unwrap();
     for info in LanguagePref::LANGUAGES {
         code.push_str("[\n");
         for key in &keys {
