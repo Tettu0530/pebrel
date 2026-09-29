@@ -1638,7 +1638,25 @@
       "p414": "seconds",
       "p415": "terminals; they are ready to use",
       "p416": "undo within",
-      "p417": "user@bastion:22 or SSH config alias"
+      "p417": "user@bastion:22 or SSH config alias",
+      "p418": "Connect",
+      "p419": "Connected",
+      "p420": "Cancel",
+      "p421": "Clear",
+      "p422": "Save",
+      "p423": "On",
+      "p424": "Off",
+      "p425": "Dark",
+      "p426": "Light",
+      "p427": "Delete",
+      "p428": "Back",
+      "p429": "Saved",
+      "p430": "Username",
+      "p431": "Close",
+      "p432": "Password",
+      "p433": "All",
+      "p434": "Terminal",
+      "p435": "Settings"
     }
   }
 }

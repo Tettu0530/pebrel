@@ -111,6 +111,17 @@ pub fn generate(directory: &Path, output: &Path) -> Result<(), String> {
         }
     }
     code.push_str("_ => None,\n}}\n");
+    // Experiment: `experiment.pick.*` ids resolve `pick()` English first, even
+    // when the same English is ambiguous across the rest of the catalog.
+    code.push_str("fn experiment_pick_id(english: &str) -> Option<Message> { match english {\n");
+    let mut experiment_sources = BTreeSet::new();
+    for key in keys.iter().filter(|key| key.starts_with("experiment.pick.")) {
+        let source = &english[*key];
+        if experiment_sources.insert(source) {
+            writeln!(code, "{source:?} => Some(Message::{}),", message_variant(key)?).unwrap();
+        }
+    }
+    code.push_str("_ => None,\n}}\n");
     writeln!(code, "static MESSAGES: [[&str; {}]; {}] = [", keys.len(), catalogs.len()).unwrap();
     for info in LanguagePref::LANGUAGES {
         code.push_str("[\n");

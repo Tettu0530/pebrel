@@ -35,7 +35,10 @@ impl UiLanguage {
         match self {
             Self::ZhCn => zh_cn,
             Self::EnUs => en_us,
-            _ => source_id(en_us).map(|message| self.text(message)).unwrap_or(en_us),
+            _ => experiment_pick_id(en_us)
+                .or_else(|| source_id(en_us))
+                .map(|message| self.text(message))
+                .unwrap_or(en_us),
         }
     }
 
