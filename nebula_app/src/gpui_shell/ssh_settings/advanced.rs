@@ -179,7 +179,9 @@ impl SettingsPane {
     ) -> Result<SshConnectionOptions, String> {
         let language = crate::gpui_shell::config::ui_language(cx);
         let Some(editor) = self.ssh_editor.as_ref() else {
-            return Err(language.pick("SSH 编辑器已关闭", "The SSH editor is closed").to_owned());
+            return Err(language
+                .text(crate::i18n::Message::SettingsSshTheSshEditorIsClosed)
+                .to_owned());
         };
         let mut connection = editor.connection.clone();
         connection.proxy_host = self.ssh_proxy_host_input.read(cx).value().trim().to_owned();
@@ -198,10 +200,7 @@ impl SettingsPane {
                 ) =>
                 {
                     return Err(language
-                        .pick(
-                            "代理端口需要是 1–65535 之间的数字",
-                            "The proxy port must be a number from 1 to 65535",
-                        )
+                        .text(crate::i18n::Message::SettingsSshTheProxyPortMustBe)
                         .to_owned());
                 },
                 _ => None,
@@ -212,18 +211,12 @@ impl SettingsPane {
         if connection.has_custom_proxy() && !editor.clear_proxy_password && !password.is_empty() {
             if connection.proxy_username.is_empty() {
                 return Err(language
-                    .pick(
-                        "填写代理密码时也需要填写代理用户名",
-                        "Enter a proxy username when providing a proxy password",
-                    )
+                    .text(crate::i18n::Message::SettingsSshEnterAProxyUsernameWhen)
                     .to_owned());
             }
             if connection.proxy_mode == SshHostProxyMode::Socks5 && password.len() > 255 {
                 return Err(language
-                    .pick(
-                        "SOCKS5 代理密码不能超过 255 字节",
-                        "The SOCKS5 proxy password cannot exceed 255 bytes",
-                    )
+                    .text(crate::i18n::Message::SettingsSshTheSocks5ProxyPasswordCannot)
                     .to_owned());
             }
         }
@@ -296,8 +289,16 @@ impl SettingsPane {
             SshHostProxyMode::Socks5 | SshHostProxyMode::Http
         );
         let proxy_modes = [
-            ("ssh-proxy-inherit", language.pick("跟随全局", "Inherit"), SshHostProxyMode::Inherit),
-            ("ssh-proxy-direct", language.pick("不使用", "None"), SshHostProxyMode::Direct),
+            (
+                "ssh-proxy-inherit",
+                language.text(crate::i18n::Message::SettingsSshInherit),
+                SshHostProxyMode::Inherit,
+            ),
+            (
+                "ssh-proxy-direct",
+                language.text(crate::i18n::Message::SettingsSshNone),
+                SshHostProxyMode::Direct,
+            ),
             ("ssh-proxy-socks", "SOCKS5", SshHostProxyMode::Socks5),
             ("ssh-proxy-http", "HTTP", SshHostProxyMode::Http),
         ];
@@ -341,11 +342,19 @@ impl SettingsPane {
         let jump_modes = [
             (
                 "ssh-jump-inherit",
-                language.pick("跟随 SSH config", "SSH config"),
+                language.text(crate::i18n::Message::SettingsSshSshConfig),
                 SshHostJumpMode::Inherit,
             ),
-            ("ssh-jump-none", language.pick("不使用", "None"), SshHostJumpMode::None),
-            ("ssh-jump-host", language.pick("指定主机", "Use host"), SshHostJumpMode::Host),
+            (
+                "ssh-jump-none",
+                language.text(crate::i18n::Message::SettingsSshNone),
+                SshHostJumpMode::None,
+            ),
+            (
+                "ssh-jump-host",
+                language.text(crate::i18n::Message::SettingsSshUseHost),
+                SshHostJumpMode::Host,
+            ),
         ];
         let selected_jump = jump_modes
             .iter()
@@ -383,11 +392,11 @@ impl SettingsPane {
             .collect::<Vec<_>>();
         let destination = self.ssh_destination_from_draft(cx).unwrap_or_default();
         let route = self.ssh_connection_from_draft(&destination, cx).ok().map(|connection| {
-            let mut steps = vec![language.pick("本机", "Local").to_owned()];
+            let mut steps = vec![language.text(crate::i18n::Message::SettingsSshLocal).to_owned()];
             match connection.proxy_mode {
-                SshHostProxyMode::Inherit => {
-                    steps.push(language.pick("全局网络规则", "Global network rules").to_owned())
-                },
+                SshHostProxyMode::Inherit => steps.push(
+                    language.text(crate::i18n::Message::SettingsSshGlobalNetworkRules).to_owned(),
+                ),
                 SshHostProxyMode::Direct => {},
                 SshHostProxyMode::Socks5 | SshHostProxyMode::Http => steps.push(format!(
                     "{} {}:{}",
@@ -401,13 +410,14 @@ impl SettingsPane {
                 )),
             }
             match connection.jump_mode {
-                SshHostJumpMode::Inherit => steps
-                    .push(language.pick("SSH config 跳板规则", "SSH config jump rules").to_owned()),
+                SshHostJumpMode::Inherit => steps.push(
+                    language.text(crate::i18n::Message::SettingsSshSshConfigJumpRules).to_owned(),
+                ),
                 SshHostJumpMode::None => {},
                 SshHostJumpMode::Host => steps.push(connection.jump_host),
             }
             steps.push(if destination.is_empty() {
-                language.pick("目标主机", "Target host").to_owned()
+                language.text(crate::i18n::Message::SettingsSshTargetHost).to_owned()
             } else {
                 destination.clone()
             });
@@ -415,11 +425,8 @@ impl SettingsPane {
         });
         v_flex()
             .w_full()
-            .child(div().text_xs().font_medium().child(language.pick("网络代理", "Network proxy")))
-            .child(editor_hint(language.pick(
-                "仅覆盖这台主机，不改变全局网络设置。",
-                "Applies to this host without changing global network settings.",
-            ), cx).mt_1())
+            .child(div().text_xs().font_medium().child(language.text(crate::i18n::Message::SettingsNetworkTitle)))
+            .child(editor_hint(language.text(crate::i18n::Message::SettingsSshAppliesToThisHostWithout), cx).mt_1())
             .child(h_flex().mt_3().p(px(3.0)).rounded_lg().bg(theme.input)
                 .child(crate::gpui_shell::widgets::segmented::SegmentedRow::new(
                     "ssh-proxy-modes", selected_proxy,
@@ -430,36 +437,33 @@ impl SettingsPane {
                 body.child(
                     h_flex().mt_4().gap_3().items_start()
                         .child(div().flex_1().min_w_0().child(editor_field(
-                            language.pick("代理地址", "Proxy host"),
-                            editor_input(&self.ssh_proxy_host_input, language.pick("代理地址", "Proxy host"), window, cx),
+                            language.text(crate::i18n::Message::SettingsSshProxyHost),
+                            editor_input(&self.ssh_proxy_host_input, language.text(crate::i18n::Message::SettingsSshProxyHost), window, cx),
                         )))
                         .child(div().w(px(84.0)).flex_shrink_0().child(editor_field(
-                            language.pick("端口", "Port"),
-                            editor_input(&self.ssh_proxy_port_input, language.pick("代理端口", "Proxy port"), window, cx),
+                            language.text(crate::i18n::Message::CommonPort),
+                            editor_input(&self.ssh_proxy_port_input, language.text(crate::i18n::Message::SettingsSshProxyPort), window, cx),
                         ))),
                 )
                 .child(
                     h_flex().mt_4().gap_3().items_start()
                         .child(div().flex_1().min_w_0().child(editor_field(
-                            language.pick("用户名（可选）", "Username (optional)"),
-                            editor_input(&self.ssh_proxy_username_input, language.pick("代理用户名", "Proxy username"), window, cx),
+                            language.text(crate::i18n::Message::SettingsSshUsernameOptional),
+                            editor_input(&self.ssh_proxy_username_input, language.text(crate::i18n::Message::SettingsSshProxyUsername), window, cx),
                         )))
                         .child(div().flex_1().min_w_0().child(editor_field(
-                            language.pick("密码（可选）", "Password (optional)"),
-                            editor_input(&self.ssh_proxy_password_input, language.pick("代理密码", "Proxy password"), window, cx)
+                            language.text(crate::i18n::Message::SettingsSshPasswordOptional),
+                            editor_input(&self.ssh_proxy_password_input, language.text(crate::i18n::Message::SettingsSshProxyPassword), window, cx)
                                 .mask_toggle().disabled(editor.clear_proxy_password),
                         ))),
                 )
-                .child(editor_hint(language.pick(
-                    "代理密码仅保存在系统凭据库，不写入主机配置。",
-                    "Proxy passwords stay in the system credential store, never in host configuration.",
-                ), cx).mt_2())
+                .child(editor_hint(language.text(crate::i18n::Message::SettingsSshProxyPasswordsStayInThe), cx).mt_2())
                 .when(editor.original_destination.is_some(), |body| {
                     body.child(
                         div().mt_2().child(
                             Checkbox::new("ssh-clear-proxy-password").small()
                                 .checked(editor.clear_proxy_password)
-                                .label(language.pick("清除已保存的代理密码", "Remove the saved proxy password"))
+                                .label(language.text(crate::i18n::Message::SettingsSshRemoveTheSavedProxyPassword))
                                 .on_click(cx.listener(|this, value: &bool, window, cx| {
                                     if let Some(editor) = this.ssh_editor.as_mut() {
                                         editor.clear_proxy_password = *value;
@@ -473,15 +477,12 @@ impl SettingsPane {
                     )
                 })
                 .when(editor.connection.proxy_mode == SshHostProxyMode::Http, |body| {
-                    body.child(editor_hint(language.pick(
-                        "HTTP CONNECT 代理；代理认证本身不使用 TLS，请仅在可信网络中使用。",
-                        "HTTP CONNECT; proxy authentication is not protected by TLS. Use a trusted network.",
-                    ), cx).mt_2())
+                    body.child(editor_hint(language.text(crate::i18n::Message::SettingsSshHttpConnectProxyAuthenticationIs), cx).mt_2())
                 })
             })
             .child(
                 v_flex().mt_5().pt_5().border_t_1().border_color(theme.border)
-                    .child(div().text_xs().font_medium().child(language.pick("SSH 跳板机", "SSH jump host")))
+                    .child(div().text_xs().font_medium().child(language.text(crate::i18n::Message::SettingsSshSshJumpHost)))
                     .child(h_flex().mt_3().p(px(3.0)).rounded_lg().bg(theme.input)
                         .child(crate::gpui_shell::widgets::segmented::SegmentedRow::new(
                             "ssh-jump-modes", selected_jump,
@@ -493,10 +494,10 @@ impl SettingsPane {
                             v_flex().mt_4().gap_2()
                                 .child(
                                     h_flex().justify_between().items_center()
-                                        .child(div().text_xs().font_medium().child(language.pick("跳板主机", "Jump host")))
+                                        .child(div().text_xs().font_medium().child(language.text(crate::i18n::Message::SettingsSshJumpHost)))
                                         .child(
                                             Button::new("ssh-jump-choose-saved").ghost().xsmall()
-                                                .label(language.pick("从已保存主机选择", "Choose saved host"))
+                                                .label(language.text(crate::i18n::Message::SettingsSshChooseSavedHost))
                                                 .icon(if editor.jump_picker_open { IconName::ChevronUp } else { IconName::ChevronDown })
                                                 .on_click(cx.listener(|this, _, _, cx| {
                                                     if let Some(editor) = this.ssh_editor.as_mut() {
@@ -506,14 +507,11 @@ impl SettingsPane {
                                                 })),
                                         ),
                                 )
-                                .child(editor_input(&self.ssh_jump_host_input, language.pick("跳板主机", "Jump host"), window, cx))
+                                .child(editor_input(&self.ssh_jump_host_input, language.text(crate::i18n::Message::SettingsSshJumpHost), window, cx))
                                 .when(editor.jump_picker_open, |section| {
                                     let choices = editor.jump_choices.iter().filter(|(host, _)| host != &destination).collect::<Vec<_>>();
                                     if choices.is_empty() {
-                                        return section.child(editor_hint(language.pick(
-                                            "没有其他已保存主机；可直接填写地址或 SSH config 别名。",
-                                            "No other saved hosts. Enter an address or SSH config alias.",
-                                        ), cx));
+                                        return section.child(editor_hint(language.text(crate::i18n::Message::SettingsSshNoOtherSavedHostsEnter), cx));
                                     }
                                     section.child(
                                         v_flex().h(px((choices.len() as f32 * 42.0).min(168.0)))
@@ -537,24 +535,15 @@ impl SettingsPane {
                                             }))),
                                     )
                                 })
-                                .child(editor_hint(language.pick(
-                                    "沿用跳板主机自己的用户名、密钥和已存凭据；不会使用目标主机的密码。",
-                                    "Uses the jump host's own username, keys and saved credentials, never the target password.",
-                                ), cx)),
+                                .child(editor_hint(language.text(crate::i18n::Message::SettingsSshUsesTheJumpHostS), cx)),
                         )
                     })
-                    .child(editor_hint(language.pick(
-                        "网络代理用于连接第一台 SSH 主机，再由跳板转发到目标。",
-                        "The network proxy connects to the first SSH host; the jump host forwards to the target.",
-                    ), cx).mt_3()),
+                    .child(editor_hint(language.text(crate::i18n::Message::SettingsSshTheNetworkProxyConnectsTo), cx).mt_3()),
             )
             .child(
                 v_flex().mt_5().p_3().gap_2().rounded_md().bg(theme.group_box)
-                    .child(div().text_xs().font_medium().child(language.pick("连接规则预览", "Connection rule preview")))
-                    .child(editor_hint(route.unwrap_or_else(|| language.pick(
-                        "填写有效的代理和跳板信息后显示连接规则。",
-                        "Enter valid proxy and jump host details to preview the connection rules.",
-                    ).to_owned()), cx)),
+                    .child(div().text_xs().font_medium().child(language.text(crate::i18n::Message::SettingsSshConnectionRulePreview)))
+                    .child(editor_hint(route.unwrap_or_else(|| language.text(crate::i18n::Message::SettingsSshEnterValidProxyAndJump).to_owned()), cx)),
             )
     }
 }

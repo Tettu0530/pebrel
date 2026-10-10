@@ -97,16 +97,13 @@ pub(super) enum SshValidationError {
 impl SshValidationError {
     pub(super) fn text(self, language: crate::display::UiLanguage) -> &'static str {
         match self {
-            Self::InvalidPort => language
-                .pick("端口需要是 1–65535 之间的数字", "The port must be a number from 1 to 65535"),
-            Self::MissingDestination => language.pick(
-                "请输入 SSH 地址，例如 user@example.com",
-                "Enter an SSH address, for example user@example.com",
-            ),
-            Self::UnsafeDestination => language.pick(
-                "地址不能包含空白、控制字符或 shell 分隔符",
-                "The address cannot contain whitespace, control characters, or shell separators",
-            ),
+            Self::InvalidPort => language.text(crate::i18n::Message::SettingsSshThePortMustBeA),
+            Self::MissingDestination => {
+                language.text(crate::i18n::Message::SettingsSshEnterAnSshAddressFor)
+            },
+            Self::UnsafeDestination => {
+                language.text(crate::i18n::Message::SettingsSshTheAddressCannotContainWhitespace)
+            },
         }
     }
 }
@@ -126,16 +123,16 @@ impl SshEditorTestStatus {
 
     fn text(&self, language: crate::display::UiLanguage) -> String {
         match self {
-            Self::Connecting => language.pick("正在连接…", "Connecting...").into(),
+            Self::Connecting => language.text(crate::i18n::Message::SettingsSshConnecting).into(),
             Self::Succeeded(elapsed_ms) => {
-                format!("{} · {elapsed_ms} ms", language.pick("连接成功", "Connection succeeded"))
+                format!(
+                    "{} · {elapsed_ms} ms",
+                    language.text(crate::i18n::Message::SettingsSshConnectionSucceeded)
+                )
             },
             Self::Failed(message) => message.clone(),
             Self::TaskEnded => language
-                .pick(
-                    "连接测试任务意外结束，请重试",
-                    "The connection test ended unexpectedly; try again",
-                )
+                .text(crate::i18n::Message::SettingsSshTheConnectionTestEndedUnexpectedly)
                 .into(),
         }
     }
@@ -254,10 +251,7 @@ impl SettingsPane {
             let language = crate::gpui_shell::config::ui_language(cx);
             self.ssh_status = Some(SshStatus::Error(format!(
                 "{}: {}",
-                language.pick(
-                    "此主机仍被用作跳板，请先修改以下主机的高级设置后再删除",
-                    "This host is still used as a jump host. Update these hosts' advanced settings before deleting it",
-                ),
+                language.text(crate::i18n::Message::SettingsSshThisHostIsStillUsed),
                 dependents.join(", "),
             )));
             self.ssh_delete_confirm = None;
@@ -464,9 +458,9 @@ impl SettingsPane {
             let language = crate::gpui_shell::config::ui_language(cx);
             input.set_placeholder(
                 if adding {
-                    language.pick("留空则连接时询问", "Leave empty to ask when connecting")
+                    language.text(crate::i18n::Message::SettingsOptionLeaveEmptyToAskWhen)
                 } else {
-                    language.pick("留空则保留原有凭据", "Leave empty to keep existing credentials")
+                    language.text(crate::i18n::Message::SettingsSshLeaveEmptyToKeepExisting)
                 },
                 window,
                 cx,
@@ -683,10 +677,11 @@ impl SettingsPane {
         if proxy_password.as_deref().is_some_and(|password| !password.is_empty())
             && !crate::platform::credentials::can_store()
         {
-            self.ssh_status = Some(SshStatus::Error(crate::gpui_shell::config::ui_language(cx).pick(
-                "系统凭据库不可用，无法安全保存代理密码。请先启用系统凭据库。",
-                "The system credential store is unavailable. Enable it before saving a proxy password.",
-            ).to_owned()));
+            self.ssh_status = Some(SshStatus::Error(
+                crate::gpui_shell::config::ui_language(cx)
+                    .text(crate::i18n::Message::SettingsSshTheSystemCredentialStoreIs)
+                    .to_owned(),
+            ));
             if let Some(editor) = self.ssh_editor.as_mut() {
                 editor.advanced = true;
             }
@@ -745,7 +740,7 @@ impl SettingsPane {
         }
         let label = match self.ssh_label_input.read(cx).value().trim() {
             "" => profiles.next_default_label(
-                crate::gpui_shell::config::ui_language(cx).pick("主机", "Host"),
+                crate::gpui_shell::config::ui_language(cx).text(crate::i18n::Message::CommonHost),
             ),
             value => value.to_owned(),
         };
@@ -789,10 +784,10 @@ impl SettingsPane {
             proxy_password,
         ) {
             let language = crate::gpui_shell::config::ui_language(cx);
-            self.ssh_status = Some(SshStatus::Error(format!("{}: {error}", language.pick(
-                "主机信息已保存，但代理凭据更新失败，请重试",
-                "Host details were saved, but proxy credentials could not be updated; try again",
-            ))));
+            self.ssh_status = Some(SshStatus::Error(format!(
+                "{}: {error}",
+                language.text(crate::i18n::Message::SettingsSshHostDetailsWereSavedBut)
+            )));
             editor.advanced = true;
             self.ssh_editor = Some(editor);
             cx.notify();
@@ -889,15 +884,12 @@ impl SettingsPane {
             // 否则聚焦刚把候选打开，同一次点击又会被遮罩立即关闭。
             .on_mouse_down(MouseButton::Left, |_, _, cx| cx.stop_propagation())
             .child(
-                editor::editor_input(&self.ssh_username_input, language.pick("用户名", "Username"), window, cx)
+                editor::editor_input(&self.ssh_username_input, language.text(crate::i18n::Message::CommonUsername), window, cx)
                     .suffix(Button::new("ssh-username-history")
                     .icon(if open { IconName::ChevronUp } else { IconName::ChevronDown })
                     .ghost()
                     .xsmall()
-                    .tooltip(crate::gpui_shell::config::ui_language(cx).pick(
-                        "选择常用或最近使用的用户名",
-                        "Choose a common or recent username",
-                    ))
+                    .tooltip(crate::gpui_shell::config::ui_language(cx).text(crate::i18n::Message::SettingsSshChooseACommonOrRecent))
                     .on_click(cx.listener(|this, _, window, cx| {
                         this.toggle_ssh_username_picker(window, cx);
                     }))),
@@ -997,10 +989,7 @@ impl SettingsPane {
                     .items_center()
                     .text_xs()
                     .text_color(theme.muted_foreground)
-                    .child(language.pick(
-                        "没有匹配项，可直接输入用户名",
-                        "No matches. Enter a username directly.",
-                    ))
+                    .child(language.text(crate::i18n::Message::SettingsSshNoMatchesEnterAUsername))
                     .into_any_element()
             } else {
                 v_flex()
@@ -1192,10 +1181,14 @@ impl SettingsPane {
                     .into_any_element(),
                 PickerRow::Option(option) => {
                     let (icon, name, id) = match option.and_then(|index| CATALOG.get(index)) {
-                        Some(icon) => (icon, language.pick(icon.zh, icon.en), Some(icon.id)),
+                        Some(icon) => (icon, icon.label(language), Some(icon.id)),
                         // 未识别时头像本来就回落到 DEFAULT_ID；选择器也显示
                         // 同一张脸，避免挑选前后出现两枚不同的“终端”图标。
-                        None => (resolve(None), language.pick("自动识别", "Auto detect"), None),
+                        None => (
+                            resolve(None),
+                            language.text(crate::i18n::Message::SettingsSshAutoDetect),
+                            None,
+                        ),
                     };
                     let icon_size = PICKER_ICON_BASE_SIZE
                         * scale_for(icon, PICKER_ICON_BASE_SIZE * 0.6, PICKER_ICON_INK_W);
@@ -1263,7 +1256,7 @@ impl SettingsPane {
                     .items_center()
                     .text_xs()
                     .text_color(muted)
-                    .child(language.pick("没有匹配的图标", "No matching icons"))
+                    .child(language.text(crate::i18n::Message::SettingsSshNoMatchingIcons))
                     .into_any_element()
             } else {
                 // 滚动组件必须拿到确定高度；只设 max-height 时，它在自动高度
