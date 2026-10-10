@@ -218,16 +218,16 @@ impl SettingsPane {
             let key_status: SharedString = if provider.api_key_set {
                 if provider.api_key_hint.is_empty() {
                     language
-                        .pick("已保存在系统凭据管理器", "Saved in the system credential manager")
+                        .text(crate::i18n::Message::SettingsProvidersSavedInTheSystemCredential)
                         .into()
                 } else {
                     provider.api_key_hint.clone().into()
                 }
             } else if provider.kind.requires_api_key() {
-                language.pick("未设置", "Not set").into()
+                language.text(crate::i18n::Message::SettingsProvidersNotSet).into()
             } else {
                 language
-                    .pick("此供应商不需要 API Key", "This provider does not require an API key")
+                    .text(crate::i18n::Message::SettingsProvidersThisProviderDoesNotRequire)
                     .into()
             };
             let enabled = provider.enabled;
@@ -236,10 +236,9 @@ impl SettingsPane {
             editor = editor
                 .child(
                     self.row(
-                        language.pick("启用", "Enabled"),
-                        language.pick(
-                            "关掉后这个供应商不再出现在 AI 启动器里，配置和密钥都留着，随时可以开回来。",
-                            "When disabled, this provider is hidden from the AI launcher. Its settings and key are kept so it can be enabled again later.",
+                        language.text(crate::i18n::Message::SettingsProvidersEnabled),
+                        language.text(
+                            crate::i18n::Message::SettingsProvidersWhenDisabledThisProviderIs,
                         ),
                         crate::gpui_shell::widgets::NebulaSwitch::new("provider-enabled")
                             .checked(enabled)
@@ -250,48 +249,39 @@ impl SettingsPane {
                     ),
                 )
                 .child(self.row(
-                    language.pick("名称", "Name"),
+                    language.text(crate::i18n::Message::CommonName),
                     "",
                     div().w(px(330.0)).child(Input::new(&self.provider_inputs[0])),
                     cx,
                 ))
                 .child(self.row(
-                    language.pick("备注", "Note"),
+                    language.text(crate::i18n::Message::SettingsProvidersNote),
                     "",
                     div().w(px(330.0)).child(Input::new(&self.provider_inputs[1])),
                     cx,
                 ))
                 .child(self.row(
-                    language.pick("官方网站", "Official website"),
+                    language.text(crate::i18n::Message::SettingsOptionOfficialWebsite),
                     "",
                     div().w(px(330.0)).child(Input::new(&self.provider_inputs[2])),
                     cx,
                 ))
                 .child(self.row(
-                    language.pick("API 请求地址", "API endpoint"),
-                    language.pick(
-                        "供应商的 API 根地址，多数以 `/v1` 结尾。这里填错不会在保存时报错，而是等到第一次对话请求才失败。",
-                        "The provider's API base URL, usually ending in `/v1`. An invalid address is detected by the first conversation request, not when these settings are saved.",
-                    ),
+                    language.text(crate::i18n::Message::SettingsOptionApiEndpoint),
+                    language.text(crate::i18n::Message::SettingsProvidersTheProviderSApiBase),
                     div().w(px(330.0)).child(Input::new(&self.provider_inputs[3])),
                     cx,
                 ))
                 .child(self.row(
-                    language.pick("默认模型", "Default model"),
-                    language.pick(
-                        "新会话默认用的模型名，按供应商文档里的写法逐字填——名字对不上时同样是发起请求那一刻才报错。",
-                        "The model name used for new conversations. Enter it exactly as documented by the provider; an invalid name is detected when a request is sent.",
-                    ),
+                    language.text(crate::i18n::Message::SettingsOptionDefaultModel),
+                    language.text(crate::i18n::Message::SettingsProvidersTheModelNameUsedFor),
                     div().w(px(330.0)).child(Input::new(&self.provider_inputs[4])),
                     cx,
                 ))
                 .child(
                     self.row(
                         "API Key",
-                        language.pick(
-                            "密钥不写进设置文件，这里只显示它是否已经设过。换一把新的直接点替换，旧的会被覆盖。",
-                            "The key is not written to the settings file. This row only shows whether one is stored; replacing it overwrites the old key.",
-                        ),
+                        language.text(crate::i18n::Message::SettingsProvidersTheKeyIsNotWritten),
                         h_flex()
                             .gap_2()
                             .items_center()
@@ -304,9 +294,10 @@ impl SettingsPane {
                             .child(
                                 NebulaButton::new("provider-set-key")
                                     .label(if provider.api_key_set {
-                                        language.pick("替换…", "Replace...")
+                                        language
+                                            .text(crate::i18n::Message::SettingsProvidersReplace)
                                     } else {
-                                        language.pick("设置…", "Set...")
+                                        language.text(crate::i18n::Message::SettingsProvidersSet)
                                     })
                                     .disabled(self.provider_key_task.is_some())
                                     .on_click(cx.listener(|this, _, window, cx| {
@@ -319,9 +310,8 @@ impl SettingsPane {
                 .child(
                     self.row(
                         "Codex Goals",
-                        language.pick(
-                            "写进 `~/.codex/config.toml` 的 `features.goals`。这是 Codex 自己的特性开关，Pebrel 只负责把它落到配置里，其它供应商不受影响。",
-                            "Writes `features.goals` to `~/.codex/config.toml`. This is a Codex feature flag; Pebrel only persists it and other providers are unaffected.",
+                        language.text(
+                            crate::i18n::Message::SettingsProvidersWritesFeaturesGoalsToCodex,
                         ),
                         crate::gpui_shell::widgets::NebulaSwitch::new("provider-codex-goals")
                             .checked(goals)
@@ -333,10 +323,9 @@ impl SettingsPane {
                 )
                 .child(
                     self.row(
-                        language.pick("Codex 远程压缩", "Codex remote compaction"),
-                        language.pick(
-                            "同上，对应 `features.remote_compaction_v2`。同样只在用 Codex 时生效。",
-                            "As above, this controls `features.remote_compaction_v2` and only applies to Codex.",
+                        language.text(crate::i18n::Message::SettingsProvidersCodexRemoteCompaction),
+                        language.text(
+                            crate::i18n::Message::SettingsProvidersAsAboveThisControlsFeatures,
                         ),
                         crate::gpui_shell::widgets::NebulaSwitch::new("provider-codex-remote")
                             .checked(remote)
@@ -349,46 +338,55 @@ impl SettingsPane {
                 .child(
                     h_flex()
                         .gap_2()
-                        .child(NebulaButton::new("provider-save").label(language.pick("保存", "Save")).on_click(
-                            cx.listener(|this, _, _, cx| {
-                                this.save_provider_metadata(cx);
-                                cx.notify();
-                            }),
-                        ))
+                        .child(
+                            NebulaButton::new("provider-save")
+                                .label(language.text(crate::i18n::Message::CommonSave))
+                                .on_click(cx.listener(|this, _, _, cx| {
+                                    this.save_provider_metadata(cx);
+                                    cx.notify();
+                                })),
+                        )
                         .child(
                             NebulaButton::new("provider-test")
                                 .label(if self.provider_test_running {
-                                    language.pick("测试中…", "Testing...")
+                                    language
+                                        .text(crate::i18n::Message::SettingsNetworkActionTesting)
                                 } else {
-                                    language.pick("测试连接", "Test connection")
+                                    language
+                                        .text(crate::i18n::Message::SettingsProvidersTestConnection)
                                 })
                                 .disabled(self.provider_test_running)
                                 .on_click(cx.listener(|this, _, _, cx| {
                                     this.test_provider(cx);
                                 })),
                         )
-                        .child(NebulaButton::new("provider-codex").label(language.pick("应用到 Codex", "Apply to Codex")).on_click(
-                            cx.listener(|this, _, _, cx| {
-                                this.apply_provider_to_codex(cx);
-                            }),
-                        ))
                         .child(
-                            NebulaButton::new("provider-delete").label(language.pick("删除", "Delete")).danger().on_click(
-                                cx.listener(|this, _, window, cx| {
+                            NebulaButton::new("provider-codex")
+                                .label(
+                                    language
+                                        .text(crate::i18n::Message::SettingsProvidersApplyToCodex),
+                                )
+                                .on_click(cx.listener(|this, _, _, cx| {
+                                    this.apply_provider_to_codex(cx);
+                                })),
+                        )
+                        .child(
+                            NebulaButton::new("provider-delete")
+                                .label(language.text(crate::i18n::Message::CommonDelete))
+                                .danger()
+                                .on_click(cx.listener(|this, _, window, cx| {
                                     this.delete_provider(window, cx);
-                                }),
-                            ),
+                                })),
                         ),
                 );
         } else {
-            editor = editor.child(
-                div()
-                    .text_color(theme.muted_foreground)
-                    .child(language.pick("没有供应商配置", "No provider configured")),
-            );
+            editor =
+                editor.child(div().text_color(theme.muted_foreground).child(
+                    language.text(crate::i18n::Message::SettingsProvidersNoProviderConfigured),
+                ));
         }
 
-        self.group(language.pick("供应商", "Providers"), cx)
+        self.group(language.text(crate::i18n::Message::SettingsProvidersProviders), cx)
             .child(
                 h_flex()
                     .w_full()
@@ -404,7 +402,9 @@ impl SettingsPane {
                             .children(provider_rows)
                             .child(
                                 NebulaButton::new("provider-add")
-                                    .label(language.pick("+ 自定义供应商", "+ Custom provider"))
+                                    .label(language.text(
+                                        crate::i18n::Message::SettingsProvidersCustomProvider,
+                                    ))
                                     .on_click(cx.listener(|this, _, window, cx| {
                                         this.add_provider(window, cx);
                                     })),
