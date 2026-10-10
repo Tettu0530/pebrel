@@ -223,3 +223,17 @@ mod tests {
         assert!(picker_rows("没有这种系统", true).is_empty(), "全不命中就该是空列表");
     }
 }
+
+impl OsIcon {
+    /// Localized picker label: generic roles are translated, product names are kept.
+    pub(crate) fn label(&self, language: crate::i18n::UiLanguage) -> &'static str {
+        use crate::i18n::Message;
+        language.text(match self.id {
+            "docker" => Message::SettingsSshIconDocker,
+            "server" => Message::SettingsSshIconServer,
+            "cloud" => Message::SettingsSshIconCloud,
+            "term" => Message::SettingsSshIconTerm,
+            _ => return language.pick(self.zh, self.en),
+        })
+    }
+}

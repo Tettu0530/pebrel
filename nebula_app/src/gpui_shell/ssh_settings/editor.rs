@@ -68,9 +68,9 @@ impl SettingsPane {
         };
         let theme = cx.theme();
         let title = if editor.original_destination.is_some() {
-            language.pick("编辑 SSH 主机", "Edit SSH host")
+            language.text(crate::i18n::Message::SettingsSshEditSshHost)
         } else {
-            language.pick("添加 SSH 主机", "Add SSH host")
+            language.text(crate::i18n::Message::SettingsSshAddSshHost)
         };
         let status = match self.ssh_status.as_ref() {
             Some(SshStatus::Validation(_)) => None,
@@ -187,10 +187,7 @@ impl SettingsPane {
                                                         .child(title),
                                                 )
                                                 .child(editor_hint(
-                                                    language.pick(
-                                                        "配置连接信息，随时快速访问。",
-                                                        "Save connection details for quick access.",
-                                                    ),
+                                                    language.text(crate::i18n::Message::SettingsSshSaveConnectionDetailsForQuick),
                                                     cx,
                                                 )),
                                         )
@@ -199,7 +196,7 @@ impl SettingsPane {
                                                 .icon(IconName::Close)
                                                 .ghost()
                                                 .small()
-                                                .tooltip(language.pick("关闭", "Close"))
+                                                .tooltip(language.text(crate::i18n::Message::CommonClose))
                                                 .on_click(cx.listener(|this, _, window, cx| {
                                                     this.close_ssh_editor(window, cx);
                                                 })),
@@ -215,12 +212,12 @@ impl SettingsPane {
                                         .border_color(theme.border)
                                         .child(page_tab(
                                             "ssh-editor-basic",
-                                            language.pick("基本", "General"),
+                                            language.text(crate::i18n::Message::SettingsSshGeneral),
                                             false,
                                         ))
                                         .child(page_tab(
                                             "ssh-editor-advanced",
-                                            language.pick("高级", "Advanced"),
+                                            language.text(crate::i18n::Message::SettingsSidebarAdvanced),
                                             true,
                                         )),
                                 )
@@ -285,9 +282,9 @@ impl SettingsPane {
                                             Button::new("ssh-editor-test")
                                                 .debug_selector(|| "ssh-editor-test".to_owned())
                                                 .label(if editor.testing() {
-                                                    language.pick("测试中…", "Testing...")
+                                                    language.text(crate::i18n::Message::SettingsNetworkActionTesting)
                                                 } else {
-                                                    language.pick("测试连接", "Test connection")
+                                                    language.text(crate::i18n::Message::SettingsProvidersTestConnection)
                                                 })
                                                 .ghost()
                                                 .small()
@@ -301,7 +298,7 @@ impl SettingsPane {
                                                 .gap_2()
                                                 .child(
                                                     Button::new("ssh-editor-cancel")
-                                                        .label(language.pick("取消", "Cancel"))
+                                                        .label(language.text(crate::i18n::Message::CommonCancel))
                                                         .ghost()
                                                         .small()
                                                         .h(px(35.0))
@@ -316,7 +313,7 @@ impl SettingsPane {
                                                         .debug_selector(|| {
                                                             "ssh-editor-save".to_owned()
                                                         })
-                                                        .label(language.pick("保存", "Save"))
+                                                        .label(language.text(crate::i18n::Message::CommonSave))
                                                         .primary()
                                                         .small()
                                                         .h(px(35.0))
@@ -358,16 +355,18 @@ impl SettingsPane {
                         h_flex()
                             .gap_2()
                             .child(
-                                div()
-                                    .text_xs()
-                                    .font_medium()
-                                    .child(language.pick("主机名称", "Host name")),
+                                div().text_xs().font_medium().child(
+                                    language.text(crate::i18n::Message::SettingsSshHostName),
+                                ),
                             )
-                            .child(editor_hint(language.pick("可选", "Optional"), cx)),
+                            .child(editor_hint(
+                                language.text(crate::i18n::Message::SettingsOptionOptional),
+                                cx,
+                            )),
                     )
                     .child(editor_input(
                         &self.ssh_label_input,
-                        language.pick("主机名称", "Host name"),
+                        language.text(crate::i18n::Message::SettingsSshHostName),
                         window,
                         cx,
                     )),
@@ -380,10 +379,10 @@ impl SettingsPane {
                     .items_start()
                     .child(
                         div().flex_1().min_w_0().child(editor_field(
-                            language.pick("主机地址 *", "Host address *"),
+                            language.text(crate::i18n::Message::SettingsSshHostAddress),
                             editor_input(
                                 &self.ssh_destination_input,
-                                language.pick("主机地址", "Host address"),
+                                language.text(crate::i18n::Message::SettingsSshHostAddressV2),
                                 window,
                                 cx,
                             )
@@ -392,10 +391,10 @@ impl SettingsPane {
                     )
                     .child(
                         div().w(px(84.0)).flex_shrink_0().child(editor_field(
-                            language.pick("端口", "Port"),
+                            language.text(crate::i18n::Message::CommonPort),
                             editor_input(
                                 &self.ssh_port_input,
-                                language.pick("端口", "Port"),
+                                language.text(crate::i18n::Message::CommonPort),
                                 window,
                                 cx,
                             )
@@ -409,7 +408,12 @@ impl SettingsPane {
                     div().mt_1().text_xs().text_color(theme.danger).child(error.text(language)),
                 )
             })
-            .child(div().mt_4().child(editor_field(language.pick("用户名", "Username"), username)))
+            .child(
+                div().mt_4().child(editor_field(
+                    language.text(crate::i18n::Message::CommonUsername),
+                    username,
+                )),
+            )
             .when_some(destination, |body, destination| {
                 body.child(editor_hint(destination, cx).mt_2().truncate())
             })
@@ -431,12 +435,20 @@ impl SettingsPane {
         let theme = cx.theme();
         let (shows_password, shows_keys) = crate::display::auth_sections(editor.auth);
         let modes = [
-            ("ssh-auth-password", language.pick("密码", "Password"), SshAuthMode::Password),
-            ("ssh-auth-key", language.pick("密钥", "Key"), SshAuthMode::PublicKey),
-            ("ssh-auth-auto", language.pick("自动", "Auto"), SshAuthMode::Auto),
+            (
+                "ssh-auth-password",
+                language.text(crate::i18n::Message::CommonPassword),
+                SshAuthMode::Password,
+            ),
+            (
+                "ssh-auth-key",
+                language.text(crate::i18n::Message::SettingsSshKey),
+                SshAuthMode::PublicKey,
+            ),
+            ("ssh-auth-auto", language.text(crate::i18n::Message::CommonAuto), SshAuthMode::Auto),
             (
                 "ssh-auth-interactive",
-                language.pick("交互式", "Interactive"),
+                language.text(crate::i18n::Message::SettingsSshInteractive),
                 SshAuthMode::KeyboardInteractive,
             ),
         ];
@@ -464,7 +476,12 @@ impl SettingsPane {
         });
         v_flex()
             .w_full()
-            .child(div().text_xs().font_medium().child(language.pick("身份验证", "Authentication")))
+            .child(
+                div()
+                    .text_xs()
+                    .font_medium()
+                    .child(language.text(crate::i18n::Message::SettingsSshAuthentication)),
+            )
             .child(
                 h_flex()
                     .mt_2()
@@ -477,10 +494,10 @@ impl SettingsPane {
             .when(shows_password, |body| {
                 body.child(
                     div().mt_4().child(editor_field(
-                        language.pick("密码", "Password"),
+                        language.text(crate::i18n::Message::CommonPassword),
                         editor_input(
                             &self.ssh_password_input,
-                            language.pick("密码", "Password"),
+                            language.text(crate::i18n::Message::CommonPassword),
                             window,
                             cx,
                         )
@@ -494,12 +511,11 @@ impl SettingsPane {
                             .disabled(!crate::platform::credentials::can_store())
                             .checked(editor.save_password)
                             .label(if cfg!(windows) {
-                                language.pick(
-                                    "保存到 Windows 凭据管理器",
-                                    "Save in Windows Credential Manager",
-                                )
+                                language.text(crate::i18n::Message::SettingsSshSavePassword)
                             } else {
-                                language.pick("保存到系统凭据库", "Save in system credential store")
+                                language.text(
+                                    crate::i18n::Message::SettingsSshSaveInSystemCredentialStore,
+                                )
                             })
                             .on_click(cx.listener(|this, value: &bool, _, cx| {
                                 if let Some(editor) = this.ssh_editor.as_mut() {
@@ -534,7 +550,10 @@ impl SettingsPane {
                                 .icon(IconName::Close)
                                 .ghost()
                                 .xsmall()
-                                .tooltip(language.pick("移除私钥", "Remove private key"))
+                                .tooltip(
+                                    language
+                                        .text(crate::i18n::Message::SettingsSshRemovePrivateKey),
+                                )
                                 .on_click(cx.listener(move |this, _, _, cx| {
                                     if let Some(editor) = this.ssh_editor.as_mut() {
                                         if index < editor.private_keys.len() {
@@ -559,7 +578,10 @@ impl SettingsPane {
                         })
                         .child(
                             Button::new("ssh-add-private-key")
-                                .label(language.pick("选择私钥文件", "Choose private key"))
+                                .label(
+                                    language
+                                        .text(crate::i18n::Message::SettingsSshChoosePrivateKey),
+                                )
                                 .icon(IconName::Plus)
                                 .outline()
                                 .small()

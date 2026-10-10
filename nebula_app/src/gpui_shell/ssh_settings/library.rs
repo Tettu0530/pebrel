@@ -731,7 +731,7 @@ impl SettingsPane {
                         )
                         .child(
                             NebulaButton::new(SharedString::from(format!("ssh-restore-{ix}")))
-                                .label(language.pick("恢复", "Restore"))
+                                .label(language.text(crate::i18n::Message::RecipeOpen))
                                 .on_click(cx.listener(move |this, _, _, cx| {
                                     this.ssh_apply(
                                         |lists| lists.restore_hidden(&restore_host),
@@ -813,15 +813,16 @@ impl SettingsPane {
                         .rounded(px(6.0))
                         .bg(theme.muted)
                         .child(Icon::new(IconName::Undo2).xsmall().text_color(muted))
-                        .child(div().flex_1().text_sm().child(SharedString::from(format!(
-                            "{} {host}; {} {SSH_DELETE_UNDO_SECS} {}",
-                            language.pick("已删除", "Deleted"),
-                            language.pick("可在", "undo within"),
-                            language.pick("秒", "seconds")
+                        .child(div().flex_1().text_sm().child(SharedString::from(language.format(
+                            crate::i18n::Message::SettingsSshDeletedUndo,
+                            &[
+                                ("host", &host.to_string()),
+                                ("seconds", &SSH_DELETE_UNDO_SECS.to_string()),
+                            ],
                         ))))
                         .child(
                             NebulaButton::new("ssh-undo-delete")
-                                .label(language.pick("撤销", "Undo"))
+                                .label(language.text(crate::i18n::Message::SettingsSshUndo))
                                 .outline()
                                 .on_click(cx.listener(|this, _, _, cx| this.undo_ssh_delete(cx))),
                         ),
